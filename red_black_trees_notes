@@ -1,0 +1,7 @@
+1. If tree is empty, create new node as root node with black
+2. If tree is not empty, crate new node as leaf node with color Red
+3. If parent of new node is black then exit
+4. If parent of new node is red then check the color of uncle (parent's sibling) of new node
+   a. If color is black or null then do suitable rotation and recolor
+   b. If color is red, then recolor and also check if parent's parent of new node is not root node then recolor it and recheck
+
