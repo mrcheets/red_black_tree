@@ -1,20 +1,20 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::fmt::Debug;
 
 type Link = Option<Rc<RefCell<Node>>>;
 
-#[derive(Debug)]
 struct Node {
-    value: u32,
+    data: u32,
     parent: Link,
     left: Link,
     right: Link,
 }
 
 impl Node {
-    fn new(value: u32) -> Self {
+    fn new(data: u32) -> Self {
         Self {
-            value: value,
+            data: data,
             parent: None,
             left: None,
             right: None,
@@ -22,29 +22,44 @@ impl Node {
     }
 
     fn insert(&mut self, parent: &Rc<RefCell<Node>>, mut node: Node) {
-        if self.value <= node.value {
-            match self.right {
-                Some(ref parent_node) => {
-                    parent_node.borrow_mut().insert(parent_node, node);
+        if self.data <= node.data {
+            match &self.right {
+                Some(parent_node) => {
+                    parent_node.borrow_mut().insert(parent, node);
                 }
                 None => {
-                    node.parent = Some(parent.clone());
+                    node.parent = Some(Rc::clone(parent));
                     self.right = Some(Rc::new(RefCell::new(node)));
                 }
             }
         } else {
-            match self.left {
-                Some(ref parent_node) => {
-                    parent_node.borrow_mut().insert(parent_node, node);
+            match &self.left {
+                Some(parent_node) => {
+                    parent_node.borrow_mut().insert(parent, node);
                 }
                 None => {
-                    node.parent = Some(parent.clone());
+                    node.parent = Some(Rc::clone(parent));
                     self.left = Some(Rc::new(RefCell::new(node)));
                 }
             }
         }
     }
 
+}
+
+impl Debug for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let parent = match &self.parent {
+            Some(p) => format!("Node with value: {}", p.borrow().data),
+            None => format!("None"),
+        };
+        f.debug_struct("Node")
+            .field("data", &self.data)
+            .field("parent", &parent)
+            .field("left", &self.left)
+            .field("right", &self.right)
+            .finish()
+    }
 }
 
 #[derive(Debug)]
