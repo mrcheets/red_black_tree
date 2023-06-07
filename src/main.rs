@@ -21,24 +21,24 @@ impl Node {
         }
     }
 
-    fn insert(&mut self, parent: &Rc<RefCell<Node>>, mut node: Node) {
+    fn insert(&mut self, parent: Link, mut node: Node) {
         if self.data <= node.data {
             match &self.right {
                 Some(parent_node) => {
-                    parent_node.borrow_mut().insert(parent, node);
+                    parent_node.borrow_mut().insert(Some(Rc::clone(parent_node)), node);
                 }
                 None => {
-                    node.parent = Some(Rc::clone(parent));
+                    node.parent = parent;
                     self.right = Some(Rc::new(RefCell::new(node)));
                 }
             }
         } else {
             match &self.left {
                 Some(parent_node) => {
-                    parent_node.borrow_mut().insert(parent, node);
+                    parent_node.borrow_mut().insert(Some(Rc::clone(parent_node)), node);
                 }
                 None => {
-                    node.parent = Some(Rc::clone(parent));
+                    node.parent = parent;
                     self.left = Some(Rc::new(RefCell::new(node)));
                 }
             }
@@ -48,7 +48,7 @@ impl Node {
 }
 
 impl Debug for Node {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let parent = match &self.parent {
             Some(p) => format!("Node with value: {}", p.borrow().data),
             None => format!("None"),
@@ -77,7 +77,7 @@ impl RedBlackTree {
     fn insert_node(&mut self, node: Node) {
         match self.root {
             Some(ref root_node) => {
-                root_node.borrow_mut().insert(root_node, node);
+                root_node.borrow_mut().insert(Some(Rc::clone(root_node)), node);
             }
             None => {
                 self.root = Some(Rc::new(RefCell::new(node)));
@@ -90,8 +90,10 @@ fn main() {
     let mut rb_tree = RedBlackTree::new();
     let node1 = Node::new(3);
     let node2 = Node::new(5);
+    let node3 = Node::new(4);
     rb_tree.insert_node(node1);
     rb_tree.insert_node(node2);
+    rb_tree.insert_node(node3);
     println!("{:?}", rb_tree);
 
 }
