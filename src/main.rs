@@ -21,15 +21,15 @@ impl Node {
         }
     }
 
-    fn insert(&mut self, parent: Link, mut node: Node) {
-        if self.data <= node.data {
+    fn insert(&mut self, parent: Link, node: Rc<RefCell<Node>>) {
+        if self.data <= node.borrow().data {
             match &self.right {
                 Some(parent_node) => {
                     parent_node.borrow_mut().insert(Some(Rc::clone(parent_node)), node);
                 }
                 None => {
-                    node.parent = parent;
-                    self.right = Some(Rc::new(RefCell::new(node)));
+                    node.borrow_mut().parent = parent;
+                    self.right = Some(node);
                 }
             }
         } else {
@@ -38,13 +38,12 @@ impl Node {
                     parent_node.borrow_mut().insert(Some(Rc::clone(parent_node)), node);
                 }
                 None => {
-                    node.parent = parent;
-                    self.left = Some(Rc::new(RefCell::new(node)));
+                    node.borrow_mut().parent = parent;
+                    self.left = Some(node);
                 }
             }
         }
     }
-
 }
 
 impl Debug for Node {
@@ -74,13 +73,13 @@ impl RedBlackTree {
         }
     }
 
-    fn insert_node(&mut self, node: Node) {
+    fn insert_node(&mut self, node: Rc<RefCell<Node>>) {
         match self.root {
             Some(ref root_node) => {
                 root_node.borrow_mut().insert(Some(Rc::clone(root_node)), node);
             }
             None => {
-                self.root = Some(Rc::new(RefCell::new(node)));
+                self.root = Some(node);
             }
         }
     }
@@ -88,12 +87,13 @@ impl RedBlackTree {
 
 fn main() {
     let mut rb_tree = RedBlackTree::new();
-    let node1 = Node::new(3);
-    let node2 = Node::new(5);
-    let node3 = Node::new(4);
-    rb_tree.insert_node(node1);
-    rb_tree.insert_node(node2);
-    rb_tree.insert_node(node3);
+    let node1 = Rc::new(RefCell::new(Node::new(3)));
+    let node2 = Rc::new(RefCell::new(Node::new(5)));
+    let node3 = Rc::new(RefCell::new(Node::new(4)));
+    rb_tree.insert_node(node1.clone());
+    rb_tree.insert_node(node2.clone());
+    rb_tree.insert_node(node3.clone());
     println!("{:?}", rb_tree);
+    println!("{:?}", node3);
 
 }
