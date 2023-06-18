@@ -1,99 +1,94 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::fmt::Debug;
+use std::ptr::{null_mut};
 
-type Link = Option<Rc<RefCell<Node>>>;
+#[derive(PartialEq)]
+enum Color {
+    RED,
+    BLACK,
+}
 
+#[derive(Debug)]
 struct Node {
     data: u32,
-    parent: Link,
-    left: Link,
-    right: Link,
+    parent: *mut Node,
+    left: *mut Node,
+    right: *mut Node,
+}
+
+#[derive(Debug)]
+struct RedBlackTree {
+    root: *mut Node,
 }
 
 impl Node {
     fn new(data: u32) -> Self {
         Self {
             data: data,
-            parent: None,
-            left: None,
-            right: None,
+            parent: null_mut(),
+            left: null_mut(),
+            right: null_mut(),
         }
     }
 
-    fn insert(&mut self, parent: Link, node: Rc<RefCell<Node>>) {
-        if self.data <= node.borrow().data {
-            match &self.right {
-                Some(parent_node) => {
-                    parent_node.borrow_mut().insert(Some(Rc::clone(parent_node)), node);
-                }
-                None => {
-                    node.borrow_mut().parent = parent;
-                    self.right = Some(node);
+    fn insert(&mut self, node: &mut Node) {
+        if self.data <= node.data {
+            if self.right.is_null() {
+                    node.parent = self;
+                    self.right = node;
+            } else {
+                unsafe {
+                    let parent = &mut (*self.right);
+                    parent.insert(node);
                 }
             }
         } else {
-            match &self.left {
-                Some(parent_node) => {
-                    parent_node.borrow_mut().insert(Some(Rc::clone(parent_node)), node);
-                }
-                None => {
-                    node.borrow_mut().parent = parent;
-                    self.left = Some(node);
+            if  self.left.is_null() {
+                    node.parent = self;
+                    self.left = node;
+            } else {
+                unsafe { 
+                    let parent = &mut (*self.left);
+                    parent.insert(node); 
                 }
             }
         }
     }
-}
-
-impl Debug for Node {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let parent = match &self.parent {
-            Some(p) => format!("Node with value: {}", p.borrow().data),
-            None => format!("None"),
-        };
-        f.debug_struct("Node")
-            .field("data", &self.data)
-            .field("parent", &parent)
-            .field("left", &self.left)
-            .field("right", &self.right)
-            .finish()
-    }
-}
-
-#[derive(Debug)]
-struct RedBlackTree {
-    root: Link,
 }
 
 impl RedBlackTree {
     fn new() -> Self {
         Self {
-            root: None,
+            root: null_mut()
         }
     }
 
-    fn insert_node(&mut self, node: Rc<RefCell<Node>>) {
-        match self.root {
-            Some(ref root_node) => {
-                root_node.borrow_mut().insert(Some(Rc::clone(root_node)), node);
-            }
-            None => {
-                self.root = Some(node);
+    fn insert_node(&mut self, node: &mut Node) {
+        if self.root.is_null() {
+            self.root = node;
+        } else {
+            unsafe {
+                let root_node = &mut (*self.root);
+                root_node.insert(node);
+
             }
         }
+    }
+
+    fn balance_tree(&mut self, start_node: &mut Node) {
+
     }
 }
 
+
 fn main() {
     let mut rb_tree = RedBlackTree::new();
-    let node1 = Rc::new(RefCell::new(Node::new(3)));
-    let node2 = Rc::new(RefCell::new(Node::new(5)));
-    let node3 = Rc::new(RefCell::new(Node::new(4)));
-    rb_tree.insert_node(node1.clone());
-    rb_tree.insert_node(node2.clone());
-    rb_tree.insert_node(node3.clone());
+    let mut node1 = Node::new(3);
+    let mut node2 = Node::new(5);
+    let mut node3 = Node::new(2);
+    rb_tree.insert_node(&mut node1);
+    rb_tree.insert_node(&mut node2);
+    rb_tree.insert_node(&mut node3);
     println!("{:?}", rb_tree);
-    println!("{:?}", node3);
-
+    println!("{:?}", unsafe{ &(*rb_tree.root) });
+    println!("{:?}", unsafe{ &(*(*rb_tree.root).right) });
+    println!("{:?}", unsafe{ &(*(*rb_tree.root).left) });
 }
